@@ -1,0 +1,25 @@
+name: バグ報告
+description: 不具合・表示崩れ・エラーを報告する
+title: "[Bug] "
+labels: ["bug"]
+assignees:
+  - bizyutyu
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1. 〇〇ページを開く
+        2. 〇〇をクリック
+        3. エラーが発生する
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      placeholder: "実際に起きていることを書いてください"
+    validations:
+      required: true

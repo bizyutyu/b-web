@@ -1,0 +1,22 @@
+name: リファクタリング
+description: 動作を変えずにコードの品質・構造を改善する
+title: "[Refactor] "
+labels: ["refactor"]
+assignees:
+  - bizyutyu
+body:
+  - type: input
+    id: target
+    attributes:
+      label: 対象ファイル・モジュール
+      placeholder: "例: src/Pages/Home_.elm"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 現状の問題点
+      placeholder: "何が読みにくい・保守しにくい・冗長かを書いてください"
+    validations:
+      required: true

@@ -1,0 +1,22 @@
+name: 機能追加・改善
+description: 新機能の追加やデザイン・コンテンツの改善を提案する
+title: "[Feat] "
+labels: ["enhancement"]
+assignees:
+  - bizyutyu
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      placeholder: "何をしたいか・何を改善したいかを書いてください"
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 背景・理由
+      placeholder: "なぜこの変更が必要か書いてください"
+    validations:
+      required: true
