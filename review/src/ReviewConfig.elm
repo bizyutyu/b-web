@@ -18,7 +18,9 @@ config =
     , NoUnused.CustomTypeConstructors.rule []
         |> Rule.ignoreErrorsForDirectories [ ".elm-land" ]
     , NoUnused.Parameters.rule
-        |> Rule.ignoreErrorsForDirectories [ ".elm-land" ]
+        -- elm-land の page 関数は Shared.Model -> Route () を必ず受け取る設計のため
+        -- src/Pages/ ではパラメータ未使用を許容する
+        |> Rule.ignoreErrorsForDirectories [ ".elm-land", "src/Pages" ]
     , NoUnused.Patterns.rule
         |> Rule.ignoreErrorsForDirectories [ ".elm-land" ]
     , NoUnused.Variables.rule
