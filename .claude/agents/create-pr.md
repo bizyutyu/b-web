@@ -31,10 +31,16 @@ git branch --show-current
 ### Step 2: 既存 PR の冪等チェック
 
 ```bash
-gh pr view --json number,url 2>/dev/null
+gh pr view --json number,url
 ```
 
-PR が既に存在する場合、Step 5 で「変更なし」サマリを返して終了。
+- exit 0 かつ JSON が返った場合 → PR が既に存在する。Step 5 で「変更なし」サマリを返して終了。
+- "no pull requests found" 相当のエラーで exit 非ゼロ → PR 未存在。Step 3 へ進む。
+- 認証エラー・ネットワーク障害など上記以外で exit 非ゼロ → 以下のサマリを返して終了:
+
+```
+⚠️ PR 情報の取得に失敗しました（認証エラーまたはネットワーク障害の可能性）。`gh auth status` を確認してください。
+```
 
 ### Step 3: テンプレートと Issue 情報の取得
 
@@ -54,12 +60,15 @@ Issue が見つからない場合:
 
 テンプレートをベースに、HTML コメント（`<!-- ... -->`）を Issue のタイトル・body から推測した内容で置き換えて body を構築する。`Closes #` には Issue 番号を補完する。
 
+body にシングルクォートが含まれる可能性があるため `--body-file` を使用する:
+
 ```bash
+printf '%s' '<構築した body>' > /tmp/gh_pr_body.txt
 gh pr create \
   --base main \
   --title '<Issue title>' \
   --assignee bizyutyu \
-  --body '<構築した body>'
+  --body-file /tmp/gh_pr_body.txt
 ```
 
 ### Step 5: 結果報告
