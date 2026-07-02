@@ -12,7 +12,7 @@ import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _shared _route =
+page _ _ =
     Page.new
         { init = init
         , update = update
