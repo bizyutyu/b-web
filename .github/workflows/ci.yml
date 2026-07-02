@@ -38,3 +38,44 @@ jobs:
 
       - name: Review
         run: elm-review --config review
+
+  exif-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install exiftool
+        run: sudo apt-get install -y libimage-exiftool-perl
+
+      - name: Check new images for EXIF metadata
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ github.base_ref }}"
+
+          IMAGES=$(git diff --name-only --diff-filter=AM \
+            "origin/${{ github.base_ref }}" HEAD \
+            | grep -iE '\.(jpg|jpeg|png|tiff|webp|heic)$' || true)
+
+          if [ -z "$IMAGES" ]; then
+            echo "No new image files. Skipping."
+            exit 0
+          fi
+
+          FAILED=0
+          while IFS= read -r img; do
+            if exiftool -EXIF:all "$img" | grep -q .; then
+              echo "::error file=$img::EXIF metadata detected. Strip with: exiftool -all= \"$img\""
+              FAILED=1
+            fi
+          done <<< "$IMAGES"
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo ""
+            echo "Run 'exiftool -all= <file>' locally then re-push."
+            exit 1
+          fi
+          echo "All images are EXIF-free."
