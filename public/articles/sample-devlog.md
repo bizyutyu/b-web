@@ -1,3 +1,9 @@
+---
+type: log-entry
+title: サンプル制作日誌
+date: 2026-07-03
+---
+
 # サンプル制作日誌
 
 これは記事配信基盤の動作確認用サンプルです。
@@ -7,7 +13,7 @@
 `dillonkearns/elm-markdown` を使って Markdown を Elm でレンダリングする基盤を整備した。
 
 - `public/articles/` に Markdown ファイルを置く
-- `public/articles/index.json` にメタデータを書く
+- `public/articles/index.json` にスラッグを追記する
 - デプロイするだけで記事が公開される
 
 ## メモ
