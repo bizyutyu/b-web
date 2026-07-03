@@ -25,6 +25,8 @@ type alias WorkPage =
     , badges : List String
     , devlogUrl : Maybe String
     , relatedWorks : List RelatedWork
+    -- フェーズ2以降で表示予定: エンジニアサイトへの昇格リンク（フェーズ1は非表示）
+    , engineerSiteUrl : Maybe String
     }
 
 
