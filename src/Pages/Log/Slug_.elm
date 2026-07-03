@@ -52,9 +52,14 @@ update msg model =
         GotMarkdown (Ok rawContent) ->
             case model of
                 Loading slug ->
-                    ( Loaded (Articles.parseArticle slug rawContent)
-                    , Effect.none
-                    )
+                    -- SPA ホスティングは存在しないファイルを 200 + HTML で返すことがある
+                    if String.startsWith "<" (String.trimLeft rawContent) then
+                        ( Failed, Effect.none )
+
+                    else
+                        ( Loaded (Articles.parseArticle slug rawContent)
+                        , Effect.none
+                        )
 
                 _ ->
                     ( model, Effect.none )
