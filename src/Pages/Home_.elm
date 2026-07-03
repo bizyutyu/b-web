@@ -13,7 +13,7 @@ page =
             [ section [ class "hero" ]
                 [ h1 [ class "catchphrase" ] [ text "テステスhogehoge" ]
                 , nav [ class "home-nav" ]
-                    [ a [ href "/works" ] [ text "作品" ]
+                    [ a [ href "/work" ] [ text "作品" ]
                     , a [ href "/log" ] [ text "ログ" ]
                     ]
                 ]

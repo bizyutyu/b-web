@@ -1,4 +1,4 @@
-module Pages.Works exposing (page)
+module Pages.Work exposing (page)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -10,7 +10,7 @@ page : View msg
 page =
     { title = "作品"
     , body =
-        [ main_ [ class "works-page" ]
+        [ main_ [ class "work-page" ]
             [ h1 [] [ text "作品" ]
             , viewList Works.all
             ]
@@ -25,11 +25,11 @@ viewList works =
             p [] [ text "準備中です。" ]
 
         _ ->
-            ul [ class "works-list" ]
+            ul [ class "work-list" ]
                 (List.map viewItem works)
 
 
 viewItem : WorkEntry -> Html msg
 viewItem entry =
     li []
-        [ a [ href ("/works/" ++ entry.slug) ] [ text entry.work.title ] ]
+        [ a [ href ("/work/" ++ entry.slug) ] [ text entry.work.title ] ]
