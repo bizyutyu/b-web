@@ -16,7 +16,9 @@ config =
     [ NoUnused.CustomTypeConstructorArgs.rule
         |> Rule.ignoreErrorsForDirectories [ ".elm-land" ]
     , NoUnused.CustomTypeConstructors.rule []
-        |> Rule.ignoreErrorsForDirectories [ ".elm-land" ]
+        -- elm-land の Page Model Msg 構造上 NoOp 等のダミーコンストラクタが必要になるため
+        -- src/Pages/ と WorkPage コンポーネントを除外する
+        |> Rule.ignoreErrorsForDirectories [ ".elm-land", "src/Pages", "src/Components" ]
     , NoUnused.Parameters.rule
         -- elm-land の page 関数は Shared.Model -> Route () を必ず受け取る設計のため
         -- src/Pages/ ではパラメータ未使用を許容する
