@@ -1,4 +1,4 @@
-module Pages.Works.Slug_ exposing (Model, Msg, page)
+module Pages.Work.Slug_ exposing (Model, Msg, page)
 
 import Components.WorkPage as WorkPage
 import Effect exposing (Effect)
@@ -59,7 +59,7 @@ view model =
             , body =
                 [ main_ []
                     [ p [] [ text "存在しない作品です。" ]
-                    , a [ href "/works" ] [ text "← 作品一覧に戻る" ]
+                    , a [ href "/work" ] [ text "← 作品一覧に戻る" ]
                     ]
                 ]
             }
