@@ -18,7 +18,7 @@ jobs:
           node-version: 20
 
       - name: Install Elm
-        run: npm install -g elm
+        run: npm install -g elm@0.19.1
 
       - name: Build
         run: npx elm-land@0.20.1 build
@@ -34,7 +34,7 @@ jobs:
           node-version: 20
 
       - name: Install Elm and elm-review
-        run: npm install -g elm elm-review
+        run: npm install -g elm@0.19.1 elm-review
 
       - name: Review
         run: elm-review --config review
