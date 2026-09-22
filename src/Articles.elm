@@ -1,11 +1,9 @@
 module Articles exposing
     ( Article
     , ArticleMeta
-    , fetchIndex
-    , fetchMarkdown
-    , parseArticle
+    , fetchList
+    , fetchOne
     , render
-    , slugListDecoder
     )
 
 import Html exposing (Html)
@@ -15,10 +13,25 @@ import Markdown.Parser
 import Markdown.Renderer
 
 
+{-| 記事データはFirestoreの `articles` コレクションから直接取得する
+（バックエンド稼働前の暫定対応）。Security Rulesで `articles` の
+読み取りのみ公開しており、書き込みはCIからのAdmin SDK経由のみ許可している。
+-}
+projectId : String
+projectId =
+    "b-website-prod"
+
+
+baseUrl : String
+baseUrl =
+    "https://firestore.googleapis.com/v1/projects/" ++ projectId ++ "/databases/(default)/documents"
+
+
 type alias ArticleMeta =
     { slug : String
     , title : String
     , date : String
+    , tags : List String
     }
 
 
@@ -28,40 +41,24 @@ type alias Article =
     }
 
 
-{-| index.json はスラッグのリストのみ保持する。
-メタデータは各 .md ファイルの frontmatter が正とする（OKF 準拠）。
+{-| 記事一覧を取得する。Firestoreの1コレクションあたりの読み取りAPIを
+そのまま利用しており、現時点ではタグ絞り込み・ページネーションは行わず
+全件を返す（将来、必要になった時点で `runQuery` ベースのクエリに拡張する）。
 -}
-slugListDecoder : Decoder (List String)
-slugListDecoder =
-    Decode.list Decode.string
-
-
-fetchIndex : (Result Http.Error (List String) -> msg) -> Cmd msg
-fetchIndex toMsg =
+fetchList : (Result Http.Error (List Article) -> msg) -> Cmd msg
+fetchList toMsg =
     Http.get
-        { url = "/articles/index.json"
-        , expect = Http.expectJson toMsg slugListDecoder
+        { url = baseUrl ++ "/articles"
+        , expect = Http.expectJson toMsg documentsListDecoder
         }
 
 
-fetchMarkdown : String -> (Result Http.Error String -> msg) -> Cmd msg
-fetchMarkdown slug toMsg =
+fetchOne : String -> (Result Http.Error Article -> msg) -> Cmd msg
+fetchOne slug toMsg =
     Http.get
-        { url = "/articles/" ++ slug ++ ".md"
-        , expect = Http.expectString toMsg
+        { url = baseUrl ++ "/articles/" ++ slug
+        , expect = Http.expectJson toMsg articleDecoder
         }
-
-
-{-| rawContent から frontmatter を分離して Article を返す。
-frontmatter がない場合は slug をタイトルとして扱う。
--}
-parseArticle : String -> String -> Article
-parseArticle slug rawContent =
-    let
-        ( meta, body ) =
-            parseFrontmatter slug rawContent
-    in
-    { meta = meta, body = body }
 
 
 render : String -> List (Html msg)
@@ -74,84 +71,52 @@ render markdownContent =
 
 
 
--- FRONTMATTER PARSING
+-- DECODING (Firestore REST API のドキュメント形式)
+-- https://firestore.googleapis.com/v1/{document} は
+-- { "name": "projects/.../documents/articles/<slug>", "fields": { "title": {"stringValue": ...}, ... } }
+-- という型付きフィールド形式で返す。
 
 
-parseFrontmatter : String -> String -> ( ArticleMeta, String )
-parseFrontmatter slug rawContent =
-    case String.lines rawContent of
-        firstLine :: rest ->
-            if String.trim firstLine == "---" then
-                splitAtClosingDelimiter slug rest
-
-            else
-                ( fallbackMeta slug, rawContent )
-
-        [] ->
-            ( fallbackMeta slug, "" )
+documentsListDecoder : Decoder (List Article)
+documentsListDecoder =
+    Decode.oneOf
+        [ Decode.field "documents" (Decode.list articleDecoder)
+        , Decode.succeed []
+        ]
 
 
-splitAtClosingDelimiter : String -> List String -> ( ArticleMeta, String )
-splitAtClosingDelimiter slug lines =
-    let
-        go : List String -> List String -> ( ArticleMeta, String )
-        go frontmatterLines remaining =
-            case remaining of
-                [] ->
-                    ( fallbackMeta slug, String.join "\n" frontmatterLines )
-
-                line :: rest ->
-                    if String.trim line == "---" then
-                        ( parseMeta slug frontmatterLines
-                        , String.join "\n" rest |> String.trimLeft
-                        )
-
-                    else
-                        go (frontmatterLines ++ [ line ]) rest
-    in
-    go [] lines
+articleDecoder : Decoder Article
+articleDecoder =
+    Decode.map2 Article metaDecoder (stringField "body")
 
 
-parseMeta : String -> List String -> ArticleMeta
-parseMeta slug frontmatterLines =
-    let
-        pairs =
-            List.filterMap parseYamlLine frontmatterLines
-
-        getValue key =
-            pairs
-                |> List.filter (\( k, _ ) -> k == key)
-                |> List.head
-                |> Maybe.map Tuple.second
-                |> Maybe.withDefault ""
-    in
-    { slug = slug
-    , title = getValue "title"
-    , date = getValue "date"
-    }
+metaDecoder : Decoder ArticleMeta
+metaDecoder =
+    Decode.map4 ArticleMeta
+        (Decode.field "name" Decode.string |> Decode.map slugFromDocumentName)
+        (stringField "title")
+        (stringField "date")
+        tagsField
 
 
-parseYamlLine : String -> Maybe ( String, String )
-parseYamlLine line =
-    case String.indexes ":" line of
-        idx :: _ ->
-            let
-                key =
-                    String.left idx line |> String.trim
-
-                value =
-                    String.dropLeft (idx + 1) line |> String.trim
-            in
-            if String.isEmpty key then
-                Nothing
-
-            else
-                Just ( key, value )
-
-        [] ->
-            Nothing
+slugFromDocumentName : String -> String
+slugFromDocumentName name =
+    name
+        |> String.split "/"
+        |> List.reverse
+        |> List.head
+        |> Maybe.withDefault name
 
 
-fallbackMeta : String -> ArticleMeta
-fallbackMeta slug =
-    { slug = slug, title = slug, date = "" }
+stringField : String -> Decoder String
+stringField key =
+    Decode.at [ "fields", key, "stringValue" ] Decode.string
+
+
+tagsField : Decoder (List String)
+tagsField =
+    Decode.oneOf
+        [ Decode.at [ "fields", "tags", "arrayValue", "values" ]
+            (Decode.list (Decode.field "stringValue" Decode.string))
+        , Decode.succeed []
+        ]

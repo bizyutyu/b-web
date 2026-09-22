@@ -1,6 +1,6 @@
 module Pages.Log exposing (Model, Msg, page)
 
-import Articles exposing (ArticleMeta)
+import Articles exposing (Article, ArticleMeta)
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -26,16 +26,15 @@ page _ _ =
 
 
 type Model
-    = FetchingIndex
-    | FetchingArticles Int (List ArticleMeta)
+    = Fetching
     | Ready (List ArticleMeta)
     | Failed
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( FetchingIndex
-    , Effect.sendCmd (Articles.fetchIndex GotSlugs)
+    ( Fetching
+    , Effect.sendCmd (Articles.fetchList GotArticles)
     )
 
 
@@ -44,56 +43,16 @@ init () =
 
 
 type Msg
-    = GotSlugs (Result Http.Error (List String))
-    | GotArticle String (Result Http.Error String)
+    = GotArticles (Result Http.Error (List Article))
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        GotSlugs (Ok []) ->
-            ( Ready [], Effect.none )
+        GotArticles (Ok articles) ->
+            ( Ready (sortByDate (List.map .meta articles)), Effect.none )
 
-        GotSlugs (Ok slugs) ->
-            ( FetchingArticles (List.length slugs) []
-            , Effect.batch
-                (List.map
-                    (\slug ->
-                        Effect.sendCmd
-                            (Articles.fetchMarkdown slug (GotArticle slug))
-                    )
-                    slugs
-                )
-            )
-
-        GotSlugs (Err _) ->
-            ( Failed, Effect.none )
-
-        GotArticle slug (Ok rawContent) ->
-            case model of
-                FetchingArticles remaining collected ->
-                    let
-                        article =
-                            Articles.parseArticle slug rawContent
-
-                        newCollected =
-                            collected ++ [ article.meta ]
-
-                        newRemaining =
-                            remaining - 1
-                    in
-                    if newRemaining <= 0 then
-                        ( Ready (sortByDate newCollected), Effect.none )
-
-                    else
-                        ( FetchingArticles newRemaining newCollected
-                        , Effect.none
-                        )
-
-                _ ->
-                    ( model, Effect.none )
-
-        GotArticle _ (Err _) ->
+        GotArticles (Err _) ->
             ( Failed, Effect.none )
 
 
@@ -116,10 +75,7 @@ view model =
 viewContent : Model -> Html Msg
 viewContent model =
     case model of
-        FetchingIndex ->
-            p [] [ text "読み込み中..." ]
-
-        FetchingArticles _ _ ->
+        Fetching ->
             p [] [ text "読み込み中..." ]
 
         Ready [] ->

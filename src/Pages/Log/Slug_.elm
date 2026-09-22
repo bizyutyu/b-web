@@ -26,15 +26,15 @@ page _ route =
 
 
 type Model
-    = Loading String
+    = Loading
     | Loaded Article
     | Failed
 
 
 init : String -> () -> ( Model, Effect Msg )
 init slug () =
-    ( Loading slug
-    , Effect.sendCmd (Articles.fetchMarkdown slug GotMarkdown)
+    ( Loading
+    , Effect.sendCmd (Articles.fetchOne slug GotArticle)
     )
 
 
@@ -43,28 +43,16 @@ init slug () =
 
 
 type Msg
-    = GotMarkdown (Result Http.Error String)
+    = GotArticle (Result Http.Error Article)
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        GotMarkdown (Ok rawContent) ->
-            case model of
-                Loading slug ->
-                    -- SPA ホスティングは存在しないファイルを 200 + HTML で返すことがある
-                    if String.startsWith "<" (String.trimLeft rawContent) then
-                        ( Failed, Effect.none )
+        GotArticle (Ok article) ->
+            ( Loaded article, Effect.none )
 
-                    else
-                        ( Loaded (Articles.parseArticle slug rawContent)
-                        , Effect.none
-                        )
-
-                _ ->
-                    ( model, Effect.none )
-
-        GotMarkdown (Err _) ->
+        GotArticle (Err _) ->
             ( Failed, Effect.none )
 
 
@@ -75,7 +63,7 @@ update msg model =
 view : Model -> View Msg
 view model =
     case model of
-        Loading _ ->
+        Loading ->
             { title = "読み込み中..."
             , body = [ main_ [] [ p [] [ text "読み込み中..." ] ] ]
             }
