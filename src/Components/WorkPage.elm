@@ -2,6 +2,7 @@ module Components.WorkPage exposing (RelatedWork, WorkPage, WorkType(..), view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import PageTitle
 import View exposing (View)
 
 
@@ -32,7 +33,7 @@ type alias WorkPage =
 
 view : WorkPage -> View msg
 view work =
-    { title = work.title
+    { title = PageTitle.format work.title
     , body =
         [ main_ [ class "work-page" ]
             [ viewHero work.title work.tagline
