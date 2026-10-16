@@ -2,19 +2,20 @@ module Pages.Home_ exposing (page)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import PageTitle
 import View exposing (View)
 
 
 page : View msg
 page =
-    { title = "lab"
+    { title = PageTitle.siteName
     , body =
         [ main_ [ class "home" ]
             [ section [ class "hero" ]
                 [ h1 [ class "catchphrase" ] [ text "テステスhogehoge" ]
                 , nav [ class "home-nav" ]
-                    [ a [ href "/work" ] [ text "作品" ]
-                    , a [ href "/log" ] [ text "ログ" ]
+                    [ a [ href "/input" ] [ text "input" ]
+                    , a [ href "/output" ] [ text "output" ]
                     ]
                 ]
 

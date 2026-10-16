@@ -7,10 +7,10 @@
     "env": [],
     "html": {
       "attributes": {
-        "html": { "lang": "en" },
+        "html": { "lang": "ja" },
         "head": {}
       },
-      "title": "lab-web",
+      "title": "lab",
       "meta": [
         { "charset": "UTF-8" },
         { "http-equiv": "X-UA-Compatible", "content": "IE=edge" },
