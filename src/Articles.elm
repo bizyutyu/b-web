@@ -11,6 +11,7 @@ import Http
 import Json.Decode as Decode exposing (Decoder)
 import Markdown.Parser
 import Markdown.Renderer
+import Url
 
 
 {-| 記事データはFirestoreの `articles` コレクションから直接取得する
@@ -53,10 +54,13 @@ fetchList toMsg =
         }
 
 
+{-| slug はパーセントエンコードしてから URL に埋め込む。`/` や `?` などが
+混入しても URL の構造（コレクション・クエリ）を変えられないようにするため。
+-}
 fetchOne : String -> (Result Http.Error Article -> msg) -> Cmd msg
 fetchOne slug toMsg =
     Http.get
-        { url = baseUrl ++ "/articles/" ++ slug
+        { url = baseUrl ++ "/articles/" ++ Url.percentEncode slug
         , expect = Http.expectJson toMsg articleDecoder
         }
 
